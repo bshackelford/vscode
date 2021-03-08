@@ -61,9 +61,16 @@ export class NativeHostService extends Disposable implements IHostService {
 		return this.doOpenEmptyWindow(arg1);
 	}
 
-	private doOpenWindow(toOpen: IWindowOpenable[], options?: IOpenWindowOptions): Promise<void> {
-		if (!!this.environmentService.remoteAuthority) {
+	private doOpenWindow(toOpen: IWindowOpenable[], options: IOpenWindowOptions): Promise<void> {
+		const remoteAuthority = this.environmentService.remoteAuthority;
+		if (!!remoteAuthority) {
 			toOpen.forEach(openable => openable.label = openable.label || this.getRecentLabel(openable));
+
+			if (!options || !options.hasOwnProperty('remoteAuthority')) {
+				// pass the remoteAuthority of the window the request came from.
+				// It will be used when the input is neither file nor vscode-remote.
+				options = options ? { ...options, remoteAuthority } : { remoteAuthority };
+			}
 		}
 
 		return this.nativeHostService.openWindow(toOpen, options);
